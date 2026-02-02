@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✨ 魔幻俄罗斯方块 ✨</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            color-scheme: dark;
+            --bg0: #050614;
+            --bg1: #090a1a;
+            --bg2: #0c0e22;
+            --card: rgba(8, 10, 28, 0.78);
+            --card2: rgba(14, 14, 36, 0.68);
+            --stroke: rgba(188, 168, 255, 0.28);
+            --stroke2: rgba(255, 255, 255, 0.12);
+            --text: rgba(250, 251, 255, 0.94);
+            --muted: rgba(248, 249, 255, 0.66);
+            --title: rgba(252, 253, 255, 0.98);
+
+            --accent: #c4a7ff;
+            --accent2: #38d9ff;
+            --accent3: #ff6ecd;
+            --accent4: #a855f7;
+            --accent5: #22d3ee;
+            --warning: #ffd93d;
+            --glow1: #e879f9;
+            --glow2: #38bdf8;
+            --shadow: 0 28px 90px rgba(0, 0, 0, 0.75);
+            --shadow2: 0 14px 42px rgba(0, 0, 0, 0.52);
+            --radius: 22px;
+            --radius2: 16px;
+            --glow: 0 0 0 1px rgba(188, 168, 255, 0.28), 0 0 48px rgba(56, 189, 248, 0.18), 0 0 80px rgba(232, 121, 249, 0.12);
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background:
+                radial-gradient(1400px 800px at 15% 25%, rgba(196, 167, 255, 0.25), transparent 55%),
+                radial-gradient(1100px 700px at 70% 20%, rgba(56, 217, 255, 0.22), transparent 52%),
+                radial-gradient(1000px 750px at 55% 80%, rgba(255, 110, 205, 0.18), transparent 50%),
+                radial-gradient(900px 650px at 85% 70%, rgba(168, 85, 247, 0.15), transparent 48%),
+                linear-gradient(180deg, var(--bg0), var(--bg1) 35%, var(--bg2));
+            font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            color: var(--text);
+            padding: 28px;
+            overflow: hidden;
+        }
+
+        body::before,
+        body::after {
+            content: "";
+            position: fixed;
+            inset: -35vh -35vw;
+            pointer-events: none;
+            background:
+                radial-gradient(closest-side, rgba(255, 255, 255, 0.09), transparent 68%) 8% 12% / 580px 580px,
+                radial-gradient(closest-side, rgba(196, 167, 255, 0.06), transparent 70%) 62% 18% / 520px 520px,
+                radial-gradient(closest-side, rgba(56, 217, 255, 0.05), transparent 72%) 38% 75% / 600px 600px,
+                radial-gradient(closest-side, rgba(255, 110, 205, 0.04), transparent 74%) 78% 62% / 480px 480px;
+            filter: blur(0.3px);
+            opacity: 0.95;
+            animation: floaty 18s ease-in-out infinite;
+        }
+
+        body::after {
+            opacity: 0.42;
+            transform: scale(1.12);
+            animation-duration: 25s;
+            animation-delay: -9s;
+        }
+
+        .stars {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle var(--duration) ease-in-out infinite;
+            opacity: 0;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0; transform: scale(0.5); }
+            50% { opacity: var(--opacity); transform: scale(1); }
+        }
+
+        @keyframes floaty {
+            0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+            33% { transform: translate3d(15px, -12px, 0) rotate(1deg); }
+            66% { transform: translate3d(-8px, 8px, 0) rotate(-1deg); }
+        }
+
+        .game-container {
+            display: flex;
+            gap: 24px;
+            width: min(1020px, 100%);
+            background: linear-gradient(180deg, rgba(12, 12, 38, 0.82), rgba(6, 7, 22, 0.72));
+            padding: 30px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--stroke);
+            backdrop-filter: blur(18px);
+            position: relative;
+        }
+
+        .game-container::before {
+            content: "";
+            position: absolute;
+            inset: -1px;
+            border-radius: var(--radius);
+            background:
+                radial-gradient(800px 280px at 25% -5%, rgba(196, 167, 255, 0.28), transparent 55%),
+                radial-gradient(620px 260px at 88% 12%, rgba(56, 217, 255, 0.22), transparent 55%),
+                radial-gradient(540px 240px at 55% 95%, rgba(255, 110, 205, 0.18), transparent 50%);
+            pointer-events: none;
+            mask: linear-gradient(#000, #000) content-box, linear-gradient(#000, #000);
+            -webkit-mask: linear-gradient(#000, #000) content-box, linear-gradient(#000, #000);
+            padding: 1px;
+            opacity: 1;
+            animation: borderGlow 8s ease-in-out infinite alternate;
+        }
+
+        @keyframes borderGlow {
+            0% { opacity: 0.92; }
+            100% { opacity: 1; }
+        }
+
+        .game-container::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: var(--radius);
+            pointer-events: none;
+            background:
+                linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent 38%, rgba(255, 255, 255, 0.04));
+            opacity: 0.82;
+        }
+
+        .game-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+        }
+
+        .game-title {
+            font-size: 32px;
+            font-weight: 900;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 50%, var(--accent3) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 8px;
+            text-shadow: 0 0 32px rgba(196, 167, 255, 0.32), 0 0 64px rgba(56, 217, 255, 0.18);
+            animation: titlePulse 3s ease-in-out infinite;
+        }
+
+        @keyframes titlePulse {
+            0%, 100% {
+                filter: brightness(1);
+                transform: scale(1);
+            }
+            50% {
+                filter: brightness(1.08);
+                transform: scale(1.02);
+            }
+        }
+
+        canvas {
+            border-radius: 18px;
+            border: 1px solid rgba(196, 167, 255, 0.38);
+            background:
+                linear-gradient(180deg, rgba(5, 6, 16, 0.95), rgba(8, 10, 20, 0.95));
+            display: block;
+            box-shadow: var(--shadow2), var(--glow), inset 0 0 60px rgba(196, 167, 255, 0.05);
+            image-rendering: pixelated;
+            position: relative;
+            z-index: 1;
+        }
+
+        .game-area::before {
+            content: "";
+            position: absolute;
+            inset: -12px -14px;
+            border-radius: 22px;
+            background:
+                radial-gradient(400px 240px at 25% 18%, rgba(196, 167, 255, 0.32), transparent 55%),
+                radial-gradient(380px 280px at 75% 62%, rgba(56, 217, 255, 0.24), transparent 55%),
+                radial-gradient(320px 220px at 60% 85%, rgba(255, 110, 205, 0.18), transparent 50%);
+            filter: blur(22px);
+            opacity: 0.68;
+            pointer-events: none;
+            z-index: -1;
+            animation: canvasGlow 6s ease-in-out infinite alternate;
+        }
+
+        @keyframes canvasGlow {
+            0% { opacity: 0.62; filter: blur(22px); }
+            100% { opacity: 0.75; filter: blur(26px); }
+        }
+
+        .info-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            min-width: 190px;
+            max-width: 260px;
+        }
+
+        .info-box {
+            background: linear-gradient(180deg, var(--card), var(--card2));
+            padding: 16px 16px;
+            border-radius: var(--radius2);
+            border: 1px solid var(--stroke2);
+            box-shadow: 0 14px 36px rgba(0, 0, 0, 0.42);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .info-box:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 18px 44px rgba(0, 0, 0, 0.52), 0 0 32px rgba(196, 167, 255, 0.12);
+        }
+
+        .info-box::before {
+            content: "";
+            position: absolute;
+            inset: -50px -50px auto auto;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(closest-side, rgba(196, 167, 255, 0.32), transparent 68%);
+            filter: blur(0.4px);
+            opacity: 0.82;
+            pointer-events: none;
+            animation: infoBoxGlow 5s ease-in-out infinite alternate;
+        }
+
+        @keyframes infoBoxGlow {
+            0% { opacity: 0.75; }
+            100% { opacity: 0.92; }
+        }
+
+        .info-box h3 {
+            margin-bottom: 10px;
+            color: var(--muted);
+            font-size: 11px;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .info-box p {
+            font-size: 28px;
+            font-weight: 900;
+            color: var(--title);
+            text-shadow: 0 0 24px rgba(196, 167, 255, 0.24), 0 0 48px rgba(56, 217, 255, 0.12);
+        }
+
+        #score {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 50%, var(--accent5) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            filter: drop-shadow(0 0 12px rgba(196, 167, 255, 0.28));
+        }
+
+        #level {
+            background: linear-gradient(135deg, var(--accent2) 0%, var(--accent5) 50%, var(--accent4) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            filter: drop-shadow(0 0 12px rgba(56, 217, 255, 0.28));
+        }
+
+        #lines {
+            background: linear-gradient(135deg, var(--warning) 0%, var(--accent3) 50%, var(--accent4) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            filter: drop-shadow(0 0 12px rgba(255, 217, 61, 0.28));
+        }
+
+        .controls {
+            margin-top: 12px;
+            font-size: 11px;
+            color: var(--muted);
+            line-height: 1.95;
+            background: rgba(0, 0, 0, 0.24);
+            border: 1px solid rgba(196, 167, 255, 0.14);
+            border-radius: var(--radius2);
+            padding: 14px 14px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .controls::before {
+            content: "";
+            position: absolute;
+            inset: -30px -30px auto auto;
+            width: 120px;
+            height: 120px;
+            background: radial-gradient(closest-side, rgba(56, 217, 255, 0.18), transparent 70%);
+            filter: blur(0.2px);
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .controls strong {
+            color: var(--title);
+            font-weight: 700;
+            text-shadow: 0 0 12px rgba(196, 167, 255, 0.18);
+        }
+
+        button {
+            background: linear-gradient(135deg, rgba(196, 167, 255, 0.95), rgba(56, 217, 255, 0.85));
+            color: rgba(6, 8, 16, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            padding: 14px 20px;
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 0.10em;
+            text-transform: uppercase;
+            border-radius: var(--radius2);
+            cursor: pointer;
+            transition: all 0.22s ease;
+            margin-top: 12px;
+            box-shadow:
+                0 16px 42px rgba(56, 217, 255, 0.22),
+                0 22px 58px rgba(196, 167, 255, 0.26),
+                0 0 0 1px rgba(196, 167, 255, 0.12);
+            position: relative;
+            overflow: hidden;
+        }
+
+        button::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), transparent 50%);
+            opacity: 0;
+            transition: opacity 0.22s ease;
+        }
+
+        button:focus-visible {
+            outline: none;
+            box-shadow:
+                0 0 0 3px rgba(56, 217, 255, 0.32),
+                0 0 0 1px rgba(255, 255, 255, 0.22),
+                0 22px 58px rgba(196, 167, 255, 0.30);
+        }
+
+        button:hover {
+            filter: brightness(1.08) saturate(1.08);
+            transform: translateY(-3px);
+            box-shadow:
+                0 20px 52px rgba(56, 217, 255, 0.28),
+                0 28px 68px rgba(196, 167, 255, 0.32),
+                0 0 0 1px rgba(196, 167, 255, 0.18);
+        }
+
+        button:hover::before {
+            opacity: 1;
+        }
+
+        button:active {
+            transform: translateY(-1px);
+            filter: brightness(0.96);
+        }
+
+        @media (max-width: 780px) {
+            body { padding: 18px; }
+            .game-container { flex-direction: column; align-items: center; width: 100%; }
+            .info-panel { width: min(420px, 100%); max-width: none; }
+            button { width: 100%; }
+        }
+
+        .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(180deg, rgba(8, 10, 28, 0.88), rgba(4, 5, 14, 0.85));
+            color: var(--text);
+            padding: 32px 38px;
+            border-radius: var(--radius);
+            text-align: center;
+            display: none;
+            border: 1px solid rgba(196, 167, 255, 0.38);
+            box-shadow: var(--shadow), 0 0 60px rgba(196, 167, 255, 0.15);
+            backdrop-filter: blur(16px);
+            min-width: 300px;
+            animation: gameOverFadeIn 0.4s ease-out;
+        }
+
+        @keyframes gameOverFadeIn {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.92);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        .game-over h2 {
+            margin-bottom: 24px;
+            font-size: 42px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent3), var(--accent2));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            filter: drop-shadow(0 0 20px rgba(255, 110, 205, 0.28));
+        }
+
+        .game-over p {
+            color: var(--muted);
+            margin-bottom: 12px;
+            font-size: 15px;
+        }
+
+        #finalScore {
+            color: var(--title);
+            font-size: 32px;
+            font-weight: 900;
+            text-shadow: 0 0 28px rgba(56, 217, 255, 0.24), 0 0 52px rgba(196, 167, 255, 0.16);
+        }
+    </style>
+</head>
+<body>
+    <div class="stars" id="stars"></div>
+    <div class="game-container">
+        <div class="game-area">
+            <h1 class="game-title">TETRIS</h1>
+            <canvas id="gameCanvas" width="300" height="600"></canvas>
+            <div class="game-over" id="gameOver">
+                <h2>游戏结束!</h2>
+                <p>得分: <span id="finalScore">0</span></p>
+                <button onclick="resetGame()">重新开始</button>
+            </div>
+        </div>
+        <div class="info-panel">
+            <div class="info-box">
+                <h3>分数</h3>
+                <p id="score">0</p>
+            </div>
+            <div class="info-box">
+                <h3>等级</h3>
+                <p id="level">1</p>
+            </div>
+            <div class="info-box">
+                <h3>消除行数</h3>
+                <p id="lines">0</p>
+            </div>
+            <button onclick="resetGame()">开始游戏</button>
+            <div class="controls">
+                <strong>操作说明:</strong><br>
+                ← → : 左右移动<br>
+                ↑ : 旋转<br>
+                ↓ : 加速下落<br>
+                空格 : 直接落地
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const COLS = 10;
+        const ROWS = 20;
+        const BLOCK_SIZE = 30;
+
+        let board = [];
+        let score = 0;
+        let lines = 0;
+        let level = 1;
+        let gameOver = false;
+        let currentPiece = null;
+        let dropInterval = 1000;
+        let lastDrop = 0;
+        let animationId = null;
+        let particles = [];
+
+        const COLORS = [
+            null,
+            '#FF2D92',
+            '#22D9FF',
+            '#2DFF92',
+            '#FF5CFF',
+            '#FFAE2D',
+            '#FFF368',
+            '#5897FF'
+        ];
+
+        const PIECES = [
+            [[1, 1, 1, 1]],
+            [[1, 1], [1, 1]],
+            [[0, 1, 0], [1, 1, 1]],
+            [[1, 0, 0], [1, 1, 1]],
+            [[0, 0, 1], [1, 1, 1]],
+            [[1, 0, 0], [1, 1, 0], [0, 1, 1]],
+            [[0, 1, 1], [1, 1, 0]]
+        ];
+
+        function init() {
+            board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+            score = 0;
+            lines = 0;
+            level = 1;
+            gameOver = false;
+            dropInterval = 1000;
+            updateInfo();
+            document.getElementById('gameOver').style.display = 'none';
+        }
+
+        function createPiece() {
+            const typeId = Math.floor(Math.random() * PIECES.length);
+            const piece = {
+                shape: PIECES[typeId].map(row => [...row]),
+                color: typeId + 1,
+                x: Math.floor(COLS / 2) - Math.floor(PIECES[typeId][0].length / 2),
+                y: 0
+            };
+            return piece;
+        }
+
+        function rotate(piece) {
+            const newShape = piece.shape[0].map((_, i) =>
+                piece.shape.map(row => row[i]).reverse()
+            );
+            return newShape;
+        }
+
+        function validMove(piece, offsetX = 0, offsetY = 0, newShape = null) {
+            const shape = newShape || piece.shape;
+            for (let y = 0; y < shape.length; y++) {
+                for (let x = 0; x < shape[y].length; x++) {
+                    if (shape[y][x]) {
+                        const newX = piece.x + x + offsetX;
+                        const newY = piece.y + y + offsetY;
+
+                        if (newX < 0 || newX >= COLS || newY >= ROWS) {
+                            return false;
+                        }
+                        if (newY >= 0 && board[newY][newX]) {
+                            return false;
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+
+        function merge() {
+            currentPiece.shape.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value) {
+                        const boardY = currentPiece.y + y;
+                        const boardX = currentPiece.x + x;
+                        if (boardY >= 0) {
+                            board[boardY][boardX] = currentPiece.color;
+                        }
+                    }
+                });
+            });
+        }
+
+        function createParticles(x, y, color) {
+            const particleCount = 12;
+            for (let i = 0; i < particleCount; i++) {
+                particles.push({
+                    x: x * BLOCK_SIZE + BLOCK_SIZE / 2,
+                    y: y * BLOCK_SIZE + BLOCK_SIZE / 2,
+                    vx: (Math.random() - 0.5) * 8,
+                    vy: (Math.random() - 0.5) * 8,
+                    life: 1,
+                    color: color,
+                    size: Math.random() * 4 + 2
+                });
+            }
+        }
+
+        function updateParticles() {
+            particles = particles.filter(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.2;
+                p.life -= 0.02;
+                p.size *= 0.96;
+
+                if (p.life > 0) {
+                    ctx.fillStyle = p.color + Math.floor(p.life * 255).toString(16).padStart(2, '0');
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+                    return true;
+                }
+                return false;
+            });
+        }
+
+        function clearLines() {
+            let linesCleared = 0;
+            for (let y = ROWS - 1; y >= 0; y--) {
+                if (board[y].every(cell => cell !== 0)) {
+                    // Create particles for each cleared block
+                    for (let x = 0; x < COLS; x++) {
+                        createParticles(x, y, COLORS[board[y][x]]);
+                    }
+
+                    board.splice(y, 1);
+                    board.unshift(Array(COLS).fill(0));
+                    linesCleared++;
+                    y++;
+                }
+            }
+
+            if (linesCleared > 0) {
+                lines += linesCleared;
+                score += linesCleared * 100 * level;
+                level = Math.floor(lines / 10) + 1;
+                dropInterval = Math.max(100, 1000 - (level - 1) * 100);
+                updateInfo();
+            }
+        }
+
+        function updateInfo() {
+            document.getElementById('score').textContent = score;
+            document.getElementById('level').textContent = level;
+            document.getElementById('lines').textContent = lines;
+        }
+
+        function drop() {
+            if (!currentPiece) {
+                currentPiece = createPiece();
+                if (!validMove(currentPiece)) {
+                    gameOver = true;
+                    document.getElementById('finalScore').textContent = score;
+                    document.getElementById('gameOver').style.display = 'block';
+                    return;
+                }
+            }
+
+            if (validMove(currentPiece, 0, 1)) {
+                currentPiece.y++;
+            } else {
+                merge();
+                clearLines();
+                currentPiece = createPiece();
+                if (!validMove(currentPiece)) {
+                    gameOver = true;
+                    document.getElementById('finalScore').textContent = score;
+                    document.getElementById('gameOver').style.display = 'block';
+                }
+            }
+        }
+
+        function hardDrop() {
+            while (validMove(currentPiece, 0, 1)) {
+                currentPiece.y++;
+                score += 2;
+            }
+            merge();
+            clearLines();
+            currentPiece = createPiece();
+            if (!validMove(currentPiece)) {
+                gameOver = true;
+                document.getElementById('finalScore').textContent = score;
+                document.getElementById('gameOver').style.display = 'block';
+            }
+            updateInfo();
+        }
+
+        function drawBlock(x, y, colorIndex, isGhost = false) {
+            const color = COLORS[colorIndex];
+            const size = BLOCK_SIZE - 2;
+
+            // Create gradient for each block
+            const gradient = ctx.createLinearGradient(
+                x * BLOCK_SIZE,
+                y * BLOCK_SIZE,
+                (x + 1) * BLOCK_SIZE,
+                (y + 1) * BLOCK_SIZE
+            );
+
+            if (isGhost) {
+                gradient.addColorStop(0, color + '30');
+                gradient.addColorStop(1, color + '18');
+            } else {
+                gradient.addColorStop(0, color);
+                gradient.addColorStop(0.5, color + 'E8');
+                gradient.addColorStop(1, color + 'CC');
+            }
+
+            ctx.fillStyle = gradient;
+
+            // Draw rounded rectangle
+            const px = x * BLOCK_SIZE + 1;
+            const py = y * BLOCK_SIZE + 1;
+            const radius = 4;
+
+            ctx.beginPath();
+            ctx.roundRect(px, py, size, size, radius);
+            ctx.fill();
+
+            // Add inner highlight
+            if (!isGhost) {
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+
+                // Add glow effect
+                ctx.shadowColor = color;
+                ctx.shadowBlur = 8;
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = 0;
+            }
+        }
+
+        function draw() {
+            // Clear canvas with gradient background
+            const bgGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            bgGradient.addColorStop(0, '#050614');
+            bgGradient.addColorStop(1, '#080a18');
+            ctx.fillStyle = bgGradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Reset shadow for background
+            ctx.shadowBlur = 0;
+            ctx.shadowColor = 'transparent';
+
+            // Draw grid lines
+            ctx.strokeStyle = 'rgba(196, 167, 255, 0.05)';
+            ctx.lineWidth = 0.5;
+            for (let x = 0; x <= COLS; x++) {
+                ctx.beginPath();
+                ctx.moveTo(x * BLOCK_SIZE, 0);
+                ctx.lineTo(x * BLOCK_SIZE, canvas.height);
+                ctx.stroke();
+            }
+            for (let y = 0; y <= ROWS; y++) {
+                ctx.beginPath();
+                ctx.moveTo(0, y * BLOCK_SIZE);
+                ctx.lineTo(canvas.width, y * BLOCK_SIZE);
+                ctx.stroke();
+            }
+
+            // Draw board
+            board.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value) {
+                        drawBlock(x, y, value);
+                    }
+                });
+            });
+
+            // Draw ghost piece (preview of where piece will land)
+            if (currentPiece) {
+                let ghostY = currentPiece.y;
+                while (validMove(currentPiece, 0, ghostY - currentPiece.y + 1)) {
+                    ghostY++;
+                }
+
+                currentPiece.shape.forEach((row, y) => {
+                    row.forEach((value, x) => {
+                        if (value) {
+                            drawBlock(currentPiece.x + x, ghostY + y, currentPiece.color, true);
+                        }
+                    });
+                });
+
+                // Draw current piece
+                currentPiece.shape.forEach((row, y) => {
+                    row.forEach((value, x) => {
+                        if (value) {
+                            drawBlock(currentPiece.x + x, currentPiece.y + y, currentPiece.color);
+                        }
+                    });
+                });
+            }
+
+            // Reset shadow
+            ctx.shadowBlur = 0;
+            ctx.shadowColor = 'transparent';
+        }
+
+        function gameLoop(timestamp = 0) {
+            if (gameOver) {
+                draw();
+                updateParticles();
+                return;
+            }
+
+            if (timestamp - lastDrop > dropInterval) {
+                drop();
+                lastDrop = timestamp;
+            }
+
+            draw();
+            updateParticles();
+            animationId = requestAnimationFrame(gameLoop);
+        }
+
+        function resetGame() {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            init();
+            currentPiece = createPiece();
+            lastDrop = performance.now();
+            gameLoop();
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (gameOver) return;
+
+            switch (e.key) {
+                case 'ArrowLeft':
+                    if (validMove(currentPiece, -1, 0)) {
+                        currentPiece.x--;
+                    }
+                    break;
+                case 'ArrowRight':
+                    if (validMove(currentPiece, 1, 0)) {
+                        currentPiece.x++;
+                    }
+                    break;
+                case 'ArrowDown':
+                    if (validMove(currentPiece, 0, 1)) {
+                        currentPiece.y++;
+                        score += 1;
+                        updateInfo();
+                    }
+                    break;
+                case 'ArrowUp':
+                    const rotated = rotate(currentPiece);
+                    if (validMove(currentPiece, 0, 0, rotated)) {
+                        currentPiece.shape = rotated;
+                    }
+                    break;
+                case ' ':
+                    hardDrop();
+                    break;
+            }
+            e.preventDefault();
+        });
+
+        // Create stars
+        function createStars() {
+            const starsContainer = document.getElementById('stars');
+            const starCount = 100;
+
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.setProperty('--duration', (Math.random() * 3 + 2) + 's');
+                star.style.setProperty('--opacity', Math.random() * 0.7 + 0.3);
+                star.style.animationDelay = Math.random() * 5 + 's';
+                starsContainer.appendChild(star);
+            }
+        }
+
+        init();
+        currentPiece = createPiece();
+        gameLoop();
+        createStars();
+    </script>
+</body>
+</html>
